@@ -35,7 +35,6 @@ it freely, subject to the following restrictions:
 
 #include <memory>
 #include <array>
-#include <chrono>
 
 namespace tmx
 {
@@ -91,7 +90,6 @@ namespace tmx
 		void updateAABB(sf::Vector2f position, sf::Vector2f size);
 		bool m_visible;
 		
-		std::chrono::time_point<std::chrono::system_clock> next_animation_;
 		std::vector<TileInfo>* m_tileInfo;
 	};
 

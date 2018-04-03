@@ -29,6 +29,7 @@ it freely, subject to the following restrictions:
 //#include <tmx/MapLayer.hpp>
 #include <tmx/MapLoader.hpp>
 #include <tmx/TileInfo.hpp>
+#include <tmx/Log.hpp>
 
 using namespace tmx;
 ///------TileQuad-----///
@@ -177,6 +178,7 @@ void LayerSet::draw(sf::RenderTarget& rt, sf::RenderStates states) const
 			auto index = y * m_patchCount.x + x;
 			if(index < m_patches.size() && !m_patches[index].empty())
 			{
+				// TODO: This is SLOW
 				auto iterator = find_if(m_quads.begin(), m_quads.end(), [&index] (const TileQuad::Ptr& ptr) {
 					return index == ptr->m_patchIndex;
 				});
@@ -186,8 +188,10 @@ void LayerSet::draw(sf::RenderTarget& rt, sf::RenderStates states) const
 					
 					auto& tile_info = m_tileInfo->at(gid);
 					
-					if (tile_info.animation_tile_ids_.size() > 0)
-						;//LOG("HAS ANIMATIONS\n", Logger::Type::Error);
+					// Does this tile even have animation data?
+					if (tile_info.animation_tile_ids_.size() > 0) {
+						LOG("HAS ANIMATION DATA", Logger::Type::Error);
+					}
 				}
 				
 				// Find out if it's a texture here?
