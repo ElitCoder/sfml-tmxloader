@@ -26,11 +26,13 @@ it freely, subject to the following restrictions:
    source distribution.
 *********************************************************************/
 
-#include <tmx/MapLayer.hpp>
+//#include <tmx/MapLayer.hpp>
+#include <tmx/MapLoader.hpp>
+#include <tmx/TileInfo.hpp>
 
 using namespace tmx;
 ///------TileQuad-----///
-TileQuad::TileQuad(sf::Uint16 i0, sf::Uint16 i1, sf::Uint16 i2, sf::Uint16 i3)
+TileQuad::TileQuad(sf::Uint16 i0, sf::Uint16 i1, sf::Uint16 i2, sf::Uint16 i3, sf::Uint16 gid)
     : m_colour      (sf::Color::White),
     m_parentSet	    (nullptr),
 	m_patchIndex	(-1)
@@ -39,6 +41,8 @@ TileQuad::TileQuad(sf::Uint16 i0, sf::Uint16 i1, sf::Uint16 i2, sf::Uint16 i3)
 	m_indices[1] = i1;
 	m_indices[2] = i2;
 	m_indices[3] = i3;
+	
+	gid_from_tile_ = gid;
 }
 
 void TileQuad::move(const sf::Vector2f& distance)
@@ -71,7 +75,7 @@ void TileQuad::setDirty()
 ///------LayerSet-----///
 
 //public
-LayerSet::LayerSet(const sf::Texture& texture, sf::Uint8 patchSize, const sf::Vector2u& mapSize, const sf::Vector2u tileSize)
+LayerSet::LayerSet(const sf::Texture& texture, sf::Uint8 patchSize, const sf::Vector2u& mapSize, const sf::Vector2u tileSize, std::vector<TileInfo>* tileInfo)
 	: m_texture	(texture),
 	m_patchSize	(patchSize),
 	m_mapSize	(mapSize),
@@ -80,9 +84,11 @@ LayerSet::LayerSet(const sf::Texture& texture, sf::Uint8 patchSize, const sf::Ve
 	m_visible	(true)
 {
 	m_patches.resize(m_patchCount.x * m_patchCount.y);
+	
+	m_tileInfo = tileInfo;
 }
 
-TileQuad* LayerSet::addTile(sf::Vertex vt0, sf::Vertex vt1, sf::Vertex vt2, sf::Vertex vt3, sf::Uint16 x, sf::Uint16 y)
+TileQuad* LayerSet::addTile(sf::Vertex vt0, sf::Vertex vt1, sf::Vertex vt2, sf::Vertex vt3, sf::Uint16 x, sf::Uint16 y, sf::Uint16 gid)
 {
 	sf::Int32 patchX = static_cast<sf::Int32>(std::ceil(x / m_patchSize));
 	sf::Int32 patchY = static_cast<sf::Int32>(std::ceil(y / m_patchSize));
@@ -94,7 +100,7 @@ TileQuad* LayerSet::addTile(sf::Vertex vt0, sf::Vertex vt1, sf::Vertex vt2, sf::
 	m_patches[patchIndex].push_back(vt3);
 
 	sf::Uint16 i = m_patches[patchIndex].size() - 4u;
-	m_quads.emplace_back(TileQuad::Ptr(new TileQuad(i, i + 1, i + 2, i + 3)));
+	m_quads.emplace_back(TileQuad::Ptr(new TileQuad(i, i + 1, i + 2, i + 3, gid)));
 	m_quads.back()->m_parentSet = this;
 	m_quads.back()->m_patchIndex = patchIndex;
 
@@ -171,6 +177,20 @@ void LayerSet::draw(sf::RenderTarget& rt, sf::RenderStates states) const
 			auto index = y * m_patchCount.x + x;
 			if(index < m_patches.size() && !m_patches[index].empty())
 			{
+				auto iterator = find_if(m_quads.begin(), m_quads.end(), [&index] (const TileQuad::Ptr& ptr) {
+					return index == ptr->m_patchIndex;
+				});
+				
+				if (iterator != m_quads.end()) {
+					int gid = (*iterator)->gid_from_tile_;
+					
+					auto& tile_info = m_tileInfo->at(gid);
+					
+					if (tile_info.animation_tile_ids_.size() > 0)
+						;//LOG("HAS ANIMATIONS\n", Logger::Type::Error);
+				}
+				
+				// Find out if it's a texture here?
 				states.texture = &m_texture;
 				rt.draw(m_patches[index].data(), static_cast<unsigned>(m_patches[index].size()), sf::Quads, states);
 			}

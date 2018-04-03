@@ -219,13 +219,13 @@ bool MapLoader::quadTreeAvailable() const
 
 
 
-MapLoader::TileInfo::TileInfo()
+TileInfo::TileInfo()
 	: TileSetId (0u)
 {
 
 }
 
-MapLoader::TileInfo::TileInfo(const sf::IntRect& rect, const sf::Vector2f& size, sf::Uint16 tilesetId)
+TileInfo::TileInfo(const sf::IntRect& rect, const sf::Vector2f& size, sf::Uint16 tilesetId)
 	: Size		(size),
 	TileSetId	(tilesetId)
 {
@@ -235,7 +235,7 @@ MapLoader::TileInfo::TileInfo(const sf::IntRect& rect, const sf::Vector2f& size,
 	Coords[3] = sf::Vector2f(static_cast<float>(rect.left), static_cast<float>(rect.top + rect.height));
 }
 
-void MapLoader::TileInfo::setAnimationInformation(const std::vector<int>& tile_ids, const std::vector<int>& durations, int tile_id) {
+void TileInfo::setAnimationInformation(const std::vector<int>& tile_ids, const std::vector<int>& durations, int tile_id) {
 	animation_tile_ids_ = tile_ids;
 	animation_durations_ = durations;
 	animation_tile_id_ = tile_id;

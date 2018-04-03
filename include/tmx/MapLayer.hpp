@@ -31,9 +31,11 @@ it freely, subject to the following restrictions:
 
 #include <tmx/MapObject.hpp>
 #include <tmx/Export.hpp>
+#include <tmx/TileInfo.hpp>
 
 #include <memory>
 #include <array>
+#include <chrono>
 
 namespace tmx
 {
@@ -43,18 +45,21 @@ namespace tmx
 		friend class LayerSet;
 	public:
 		using Ptr = std::shared_ptr<TileQuad>; //TODO shared libs don't like this being a unique_ptr
-		TileQuad(sf::Uint16 i0, sf::Uint16 i1, sf::Uint16 i2, sf::Uint16 i3);
+		TileQuad(sf::Uint16 i0, sf::Uint16 i1, sf::Uint16 i2, sf::Uint16 i3, sf::Uint16 gid);
 		void move(const sf::Vector2f& distance);
         void setVisible(bool);
-	private:
+	//private:
 		std::array<sf::Uint16, 4u> m_indices;
         sf::Color m_colour;
 		sf::Vector2f m_movement;
 		LayerSet* m_parentSet;
 		sf::Int32 m_patchIndex;
+		sf::Uint16 gid_from_tile_;
         void setDirty();
 	};
-
+	
+	struct TileInfo;
+	
 	/*!
     \brief Drawable composed of vertices representing a set of tiles on a layer
     */
@@ -63,8 +68,8 @@ namespace tmx
 		friend class TileQuad;
 	public:	
 
-		LayerSet(const sf::Texture& texture, sf::Uint8 patchSize, const sf::Vector2u& mapSize, const sf::Vector2u tileSize);
-		TileQuad* addTile(sf::Vertex vt0, sf::Vertex vt1, sf::Vertex vt2, sf::Vertex vt3, sf::Uint16 x, sf::Uint16 y);
+		LayerSet(const sf::Texture& texture, sf::Uint8 patchSize, const sf::Vector2u& mapSize, const sf::Vector2u tileSize, std::vector<TileInfo>* tileInfo);
+		TileQuad* addTile(sf::Vertex vt0, sf::Vertex vt1, sf::Vertex vt2, sf::Vertex vt3, sf::Uint16 x, sf::Uint16 y, sf::Uint16 gid);
 		void cull(const sf::FloatRect& bounds);
 
 	private:
@@ -85,6 +90,9 @@ namespace tmx
 		mutable sf::FloatRect m_boundingBox;
 		void updateAABB(sf::Vector2f position, sf::Vector2f size);
 		bool m_visible;
+		
+		std::chrono::time_point<std::chrono::system_clock> next_animation_;
+		std::vector<TileInfo>* m_tileInfo;
 	};
 
 

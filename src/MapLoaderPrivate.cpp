@@ -381,11 +381,25 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 			rect.left = x * (tileWidth + spacing);
 			rect.left += margin;
 			rect.width = tileWidth;
+			
+			int current_id = m_tilesetTextures.size() - 1u;
+			auto iterator = find_if(animations.begin(), animations.end(), [&current_id] (TileInfo& info) {
+				return info.animation_tile_id_ == current_id;
+			});
+			
+			TileInfo current_tile(rect,
+				sf::Vector2f(static_cast<float>(rect.width), static_cast<float>(rect.height)),
+				m_tilesetTextures.size() - 1u);
+				
+			// Add animation data
+			if (iterator != animations.end()) {
+				auto& animation_tile = *iterator;
+				
+				current_tile.setAnimationInformation(animation_tile.animation_tile_ids_, animation_tile.animation_durations_, current_id);
+			}
 
 			//store texture coords and tileset index for vertex array
-			m_tileInfo.push_back(TileInfo(rect,
-				sf::Vector2f(static_cast<float>(rect.width), static_cast<float>(rect.height)),
-				m_tilesetTextures.size() - 1u));
+			m_tileInfo.push_back(current_tile);
 		}
 	}
 
@@ -791,11 +805,11 @@ TileQuad* MapLoader::addTileToLayer(MapLayer& layer, sf::Uint16 x, sf::Uint16 y,
 	if(layer.layerSets.find(id) == layer.layerSets.end())
 	{
 		//create a new layerset for texture
-		layer.layerSets.insert(std::make_pair(id, std::make_shared<LayerSet>(*m_tilesetTextures[id], m_patchSize, sf::Vector2u(m_width, m_height), sf::Vector2u(m_tileWidth, m_tileHeight))));
+		layer.layerSets.insert(std::make_pair(id, std::make_shared<LayerSet>(*m_tilesetTextures[id], m_patchSize, sf::Vector2u(m_width, m_height), sf::Vector2u(m_tileWidth, m_tileHeight), &m_tileInfo)));
 	}
 
 	//add tile to set
-	return layer.layerSets[id]->addTile(v0, v1, v2, v3, x, y);
+	return layer.layerSets[id]->addTile(v0, v1, v2, v3, x, y, gid);
 }
 
 bool MapLoader::parseObjectgroup(const pugi::xml_node& groupNode)
