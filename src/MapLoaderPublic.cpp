@@ -222,7 +222,8 @@ bool MapLoader::quadTreeAvailable() const
 TileInfo::TileInfo()
 	: TileSetId (0u)
 {
-
+	next_animation_ = std::chrono::system_clock::now();
+	current_tile_ = 0;
 }
 
 TileInfo::TileInfo(const sf::IntRect& rect, const sf::Vector2f& size, sf::Uint16 tilesetId)
@@ -233,10 +234,30 @@ TileInfo::TileInfo(const sf::IntRect& rect, const sf::Vector2f& size, sf::Uint16
 	Coords[1] = sf::Vector2f(static_cast<float>(rect.left + rect.width), static_cast<float>(rect.top));
 	Coords[2] = sf::Vector2f(static_cast<float>(rect.left + rect.width), static_cast<float>(rect.top + rect.height));
 	Coords[3] = sf::Vector2f(static_cast<float>(rect.left), static_cast<float>(rect.top + rect.height));
+	
+	next_animation_ = std::chrono::system_clock::now();
+	current_tile_ = 0;
 }
 
 void TileInfo::setAnimationInformation(const std::vector<int>& tile_ids, const std::vector<int>& durations, int tile_id) {
 	animation_tile_ids_ = tile_ids;
 	animation_durations_ = durations;
 	animation_tile_id_ = tile_id;
+	
+	std::cout << "SET ANIMATION INFORMATION\n";
+	std::cout << "id " << tile_id << std::endl;
+}
+
+bool TileInfo::animationElapsed() {
+	return (std::chrono::system_clock::now() - next_animation_).count() > 0;
+}
+
+void TileInfo::animationStartTimer() {
+	if (animation_tile_ids_.empty())
+		return;
+		
+	current_tile_++;
+	current_tile_ %= animation_tile_ids_.size();
+	
+	next_animation_ += std::chrono::milliseconds(animation_durations_.at(current_tile_));
 }

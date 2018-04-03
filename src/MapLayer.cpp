@@ -189,11 +189,15 @@ void LayerSet::draw(sf::RenderTarget& rt, sf::RenderStates states) const
 					auto& tile_info = m_tileInfo->at(gid);
 					
 					// Does this tile even have animation data?
-					if (tile_info.animation_tile_ids_.size() > 0) {
-						LOG("HAS ANIMATION DATA", Logger::Type::Error);
-					}
+					if (!tile_info.animation_tile_ids_.empty()) {						
+						// Should we update the tile?
+						if (tile_info.animationElapsed()) {
+							// Change the sprite
+							tile_info.animationStartTimer();
+						}
+					}					
 				}
-				
+								
 				// Find out if it's a texture here?
 				states.texture = &m_texture;
 				rt.draw(m_patches[index].data(), static_cast<unsigned>(m_patches[index].size()), sf::Quads, states);

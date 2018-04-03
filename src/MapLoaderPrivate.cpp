@@ -253,7 +253,9 @@ bool MapLoader::parseTileSets(const pugi::xml_node& mapNode)
 }
 
 bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
-{
+{	
+	std::cout << "Process tiles\n";
+	
 	sf::Uint16 tileWidth, tileHeight, spacing, margin;
 
 	//try and parse tile sizes
@@ -284,6 +286,8 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 	for (const auto& child : children) {
 		std::string name = child.name();
 		
+		std::cout << "name: " << name << std::endl;
+		
 		// Ignore information which is not about tiles and animations
 		if (name != "tile")
 			continue;
@@ -294,7 +298,9 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 		for (const auto& tile_child : tile_children) {
 			std::string tile_name = tile_child.name();
 			
-			if (name != "animation")
+			std::cout << "next name: " << tile_name << std::endl;
+			
+			if (tile_name != "animation")
 				continue;
 				
 			// Go through all frames
@@ -308,6 +314,8 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 				
 				tile_ids.push_back(tile_id);
 				durations.push_back(duration);
+				
+				std::cout << "Added frame and duration\n";
 			}
 			
 			TileInfo animation;
@@ -382,10 +390,14 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 			rect.left += margin;
 			rect.width = tileWidth;
 			
-			int current_id = m_tilesetTextures.size() - 1u;
+			std::cout << "tiles: " << columns * rows << std::endl;
+			
+			int current_id = y * columns + x;
 			auto iterator = find_if(animations.begin(), animations.end(), [&current_id] (TileInfo& info) {
 				return info.animation_tile_id_ == current_id;
 			});
+			
+			std::cout << "current id " << current_id << std::endl;
 			
 			TileInfo current_tile(rect,
 				sf::Vector2f(static_cast<float>(rect.width), static_cast<float>(rect.height)),
@@ -397,6 +409,8 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 				
 				current_tile.setAnimationInformation(animation_tile.animation_tile_ids_, animation_tile.animation_durations_, current_id);
 			}
+			
+			std::cout << "TILE ID " << current_id << std::endl;
 
 			//store texture coords and tileset index for vertex array
 			m_tileInfo.push_back(current_tile);
