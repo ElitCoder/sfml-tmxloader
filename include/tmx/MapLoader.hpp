@@ -130,7 +130,7 @@ namespace tmx
         */
         bool quadTreeAvailable() const;
 
-    private:
+    public:
 		//properties which correspond to tmx
 		sf::Uint16 m_width, m_height; //tile count
 		sf::Uint16 m_tileWidth, m_tileHeight; //width / height of tiles
@@ -146,13 +146,19 @@ namespace tmx
 		std::vector<std::unique_ptr<sf::Texture>> m_imageLayerTextures;
 		std::vector<std::unique_ptr<sf::Texture>> m_tilesetTextures; //textures created from complete sets used when drawing vertex arrays
 		const sf::Uint8 m_patchSize;
-		struct TileInfo final //holds texture coords and tileset id of a tile
+		struct TileInfo //holds texture coords and tileset id of a tile
 		{
 			std::array<sf::Vector2f, 4> Coords;
 			sf::Vector2f Size;
 			sf::Uint16 TileSetId;
 			TileInfo();
 			TileInfo(const sf::IntRect& rect, const sf::Vector2f& size, sf::Uint16 tilesetId);
+			
+			std::vector<int> animation_tile_ids_;
+			std::vector<int> animation_durations_;
+			int animation_tile_id_;
+			
+			void setAnimationInformation(const std::vector<int>& tile_ids, const std::vector<int>& durations, int tile_id);
 		};
 		std::vector<TileInfo> m_tileInfo; //stores information on all the tilesets for creating vertex arrays
 

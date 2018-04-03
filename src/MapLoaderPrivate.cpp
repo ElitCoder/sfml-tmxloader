@@ -277,6 +277,65 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 		//Unload();
 		//return false;
 	}
+	
+	const auto& children = tilesetNode.children();
+	std::vector<TileInfo> animations;
+	
+	for (const auto& child : children) {
+		std::string name = child.name();
+		
+		// Ignore information which is not about tiles and animations
+		if (name != "tile")
+			continue;
+			
+		int id = child.attribute("id").as_int();
+		const auto& tile_children = child.children();
+		
+		for (const auto& tile_child : tile_children) {
+			std::string tile_name = tile_child.name();
+			
+			if (name != "animation")
+				continue;
+				
+			// Go through all frames
+			const auto& animation_children = tile_child.children();
+			std::vector<int> tile_ids;
+			std::vector<int> durations;
+			
+			for (const auto& animation_child : animation_children) {
+				int duration = animation_child.attribute("duration").as_int();
+                int tile_id = animation_child.attribute("tileid").as_int();
+				
+				tile_ids.push_back(tile_id);
+				durations.push_back(duration);
+			}
+			
+			TileInfo animation;
+			animation.setAnimationInformation(tile_ids, durations, id);
+			
+			animations.push_back(animation);
+		}
+	}
+	
+	/*
+	// Maybe load animations from here?
+	pugi::xml_node animationNode;
+	
+	while (!(animationNode = tilesetNode.child("tile"))) {
+		// Parse all animations from tile ID
+		int id = animationNode.attribute("id").as_int();
+		
+		pugi::xml_node animationNodeIterative;
+		
+		// There are animations to load
+		while (!(animationNodeIterative = animationNode.child("animation"))) {
+			std::vector<int> frames;
+			std::vector<int> delays;
+			
+			pugi::xml_node frameNode;
+		}
+	}
+	*/
 
 	//process image from disk
 	std::string imageName = fileFromPath(imageNode.attribute("source").as_string());

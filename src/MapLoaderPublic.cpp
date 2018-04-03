@@ -234,3 +234,9 @@ MapLoader::TileInfo::TileInfo(const sf::IntRect& rect, const sf::Vector2f& size,
 	Coords[2] = sf::Vector2f(static_cast<float>(rect.left + rect.width), static_cast<float>(rect.top + rect.height));
 	Coords[3] = sf::Vector2f(static_cast<float>(rect.left), static_cast<float>(rect.top + rect.height));
 }
+
+void MapLoader::TileInfo::setAnimationInformation(const std::vector<int>& tile_ids, const std::vector<int>& durations, int tile_id) {
+	animation_tile_ids_ = tile_ids;
+	animation_durations_ = durations;
+	animation_tile_id_ = tile_id;
+}
