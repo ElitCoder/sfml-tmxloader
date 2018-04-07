@@ -244,8 +244,8 @@ void TileInfo::setAnimationInformation(const std::vector<int>& tile_ids, const s
 	animation_durations_ = durations;
 	animation_tile_id_ = tile_id;
 	
-	std::cout << "SET ANIMATION INFORMATION\n";
-	std::cout << "id " << tile_id << std::endl;
+	//std::cout << "SET ANIMATION INFORMATION\n";
+	//std::cout << "id " << tile_id << std::endl;
 }
 
 bool TileInfo::animationElapsed() {
@@ -260,4 +260,28 @@ void TileInfo::animationStartTimer() {
 	current_tile_ %= animation_tile_ids_.size();
 	
 	next_animation_ += std::chrono::milliseconds(animation_durations_.at(current_tile_));
+}
+
+using std::vector;
+using sf::Vertex;
+
+vector<Vertex>& TileInfo::getCurrentAnimation() {
+	//std::cout << "Animation " << current_tile_ << " and size of animation is " << animation_quads_.size() << " with quads size " << animation_quads_.at(current_tile_).size() << std::endl;
+	return animation_quads_.at(current_tile_);
+}
+
+int TileInfo::getCurrentTileID() const {
+	return animation_tile_ids_.at(current_tile_);
+}
+
+bool TileInfo::isAnimation() const {
+	return !animation_tile_ids_.empty();
+}
+
+bool TileInfo::isLoaded() const {
+	return animation_quads_.size() == animation_tile_ids_.size();
+}
+
+void TileInfo::addAnimationQuad(const std::vector<sf::Vertex>& quads) {
+	animation_quads_.push_back(quads);
 }

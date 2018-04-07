@@ -254,7 +254,7 @@ bool MapLoader::parseTileSets(const pugi::xml_node& mapNode)
 
 bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 {	
-	std::cout << "Process tiles\n";
+	//std::cout << "Process tiles\n";
 	
 	sf::Uint16 tileWidth, tileHeight, spacing, margin;
 
@@ -286,7 +286,7 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 	for (const auto& child : children) {
 		std::string name = child.name();
 		
-		std::cout << "name: " << name << std::endl;
+		//std::cout << "name: " << name << std::endl;
 		
 		// Ignore information which is not about tiles and animations
 		if (name != "tile")
@@ -298,7 +298,7 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 		for (const auto& tile_child : tile_children) {
 			std::string tile_name = tile_child.name();
 			
-			std::cout << "next name: " << tile_name << std::endl;
+			//std::cout << "next name: " << tile_name << std::endl;
 			
 			if (tile_name != "animation")
 				continue;
@@ -315,7 +315,7 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 				tile_ids.push_back(tile_id);
 				durations.push_back(duration);
 				
-				std::cout << "Added frame and duration\n";
+				//std::cout << "Added frame and duration\n";
 			}
 			
 			TileInfo animation;
@@ -390,14 +390,14 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 			rect.left += margin;
 			rect.width = tileWidth;
 			
-			std::cout << "tiles: " << columns * rows << std::endl;
+			//std::cout << "tiles: " << columns * rows << std::endl;
 			
 			int current_id = y * columns + x;
 			auto iterator = find_if(animations.begin(), animations.end(), [&current_id] (TileInfo& info) {
 				return info.animation_tile_id_ == current_id;
 			});
 			
-			std::cout << "current id " << current_id << std::endl;
+			//std::cout << "current id " << current_id << std::endl;
 			
 			TileInfo current_tile(rect,
 				sf::Vector2f(static_cast<float>(rect.width), static_cast<float>(rect.height)),
@@ -410,7 +410,7 @@ bool MapLoader::processTiles(const pugi::xml_node& tilesetNode)
 				current_tile.setAnimationInformation(animation_tile.animation_tile_ids_, animation_tile.animation_durations_, current_id);
 			}
 			
-			std::cout << "TILE ID " << current_id << std::endl;
+			//std::cout << "TILE ID " << current_id << std::endl;
 
 			//store texture coords and tileset index for vertex array
 			m_tileInfo.push_back(current_tile);
@@ -573,7 +573,32 @@ bool MapLoader::parseLayer(const pugi::xml_node& layerNode)
 			for(unsigned int i = 0; i < tileGIDs.size(); i++)
 			{
 //                sf::Uint32 gid=resolveRotation(tileGIDs[i]);
+
+                // If tileGIDs[i] == animation ID we need to add animation data
                 addTileToLayer(layer, x, y, tileGIDs[i]);
+                
+                if (m_tileInfo[tileGIDs[i]].isAnimation() && !m_tileInfo[tileGIDs[i]].isLoaded()) {
+                    auto& tile_info = m_tileInfo[tileGIDs[i]];
+                    int start_id = tileGIDs[i] - tile_info.animation_tile_ids_.back();
+                    
+                    for (auto& tile_id : tile_info.animation_tile_ids_) {
+                        int final_id = start_id + tile_id;
+                        
+                        // Add quads for final_id
+                        tile_info.addAnimationQuad(getTileToAnimationQuad(layer, x, y, final_id));
+                    }
+                    
+                    //auto tile = addTileToLayer(layer, x, y, tileGIDs)
+                    
+                    /*
+                    std::cout << "TILE IS ANIMATION, " << tileGIDs[i] << std::endl;
+                    
+                    for_each(m_tileInfo[tileGIDs[i]].animation_tile_ids_.begin(), m_tileInfo[tileGIDs[i]].animation_tile_ids_.end(), [] (auto& id) {
+                        std::cout << "ID " << id << std::endl;
+                    });
+                    */
+                }
+                
 				x++;
 				if(x == m_width)
 				{
@@ -605,8 +630,7 @@ bool MapLoader::parseLayer(const pugi::xml_node& layerNode)
             sf::Uint32 gid = tileNode.attribute("gid").as_uint();
 
 //            gid=resolveRotation(gid);
-
-
+            
 			addTileToLayer(layer, x, y, gid);
 
 			tileNode = tileNode.next_sibling("tile");
@@ -751,6 +775,70 @@ void MapLoader::doFlips(std::bitset<3> bits, sf::Vector2f *v0, sf::Vector2f *v1,
         flipX(v0,v1,v2,v3);
         flipD(v0,v1,v2,v3);
     }
+}
+
+std::vector<sf::Vertex> MapLoader::getTileToAnimationQuad(MapLayer& layer, sf::Uint16 x, sf::Uint16 y, sf::Uint32 gid, const sf::Vector2f& offset) {
+    sf::Uint8 opacity = static_cast<sf::Uint8>(255.f * layer.opacity);
+	sf::Color colour = sf::Color(255u, 255u, 255u, opacity);
+
+    //Get bits and tile id
+    std::pair<sf::Uint32, std::bitset<3> > idAndFlags = resolveRotation(gid);
+    gid = idAndFlags.first;
+
+	//update the layer's tile set(s)
+    sf::Vertex v0, v1, v2, v3;
+
+	//applying half pixel trick avoids artifacting when scrolling
+	v0.texCoords = m_tileInfo[gid].Coords[0] + sf::Vector2f(0.5f, 0.5f);
+	v1.texCoords = m_tileInfo[gid].Coords[1] + sf::Vector2f(-0.5f, 0.5f);
+	v2.texCoords = m_tileInfo[gid].Coords[2] + sf::Vector2f(-0.5f, -0.5f);
+	v3.texCoords = m_tileInfo[gid].Coords[3] + sf::Vector2f(0.5f, -0.5f);
+
+    //flip texture coordinates according to bits set
+    doFlips(idAndFlags.second,&v0.texCoords,&v1.texCoords,&v2.texCoords,&v3.texCoords);
+
+	v0.position = sf::Vector2f(static_cast<float>(m_tileWidth * x), static_cast<float>(m_tileHeight * y));
+	v1.position = sf::Vector2f(static_cast<float>(m_tileWidth * x) + m_tileInfo[gid].Size.x, static_cast<float>(m_tileHeight * y));
+	v2.position = sf::Vector2f(static_cast<float>(m_tileWidth * x) + m_tileInfo[gid].Size.x, static_cast<float>(m_tileHeight * y) + m_tileInfo[gid].Size.y);
+	v3.position = sf::Vector2f(static_cast<float>(m_tileWidth * x), static_cast<float>(m_tileHeight * y) + m_tileInfo[gid].Size.y);
+
+	//offset tiles with size not equal to map grid size
+	sf::Uint16 tileHeight = static_cast<sf::Uint16>(m_tileInfo[gid].Size.y);
+	if(tileHeight != m_tileHeight)
+	{
+		float diff = static_cast<float>(m_tileHeight - tileHeight);
+		v0.position.y += diff;
+		v1.position.y += diff;
+		v2.position.y += diff;
+		v3.position.y += diff;
+	}
+
+	//adjust position for isometric maps
+	if(m_orientation == MapOrientation::Isometric)
+	{
+		sf::Vector2f isoOffset(-static_cast<float>(x * (m_tileWidth / 2u)), static_cast<float>(x * (m_tileHeight / 2u)));
+		isoOffset.x -= static_cast<float>(y * (m_tileWidth / 2u));
+		isoOffset.y -= static_cast<float>(y * (m_tileHeight / 2u));
+		isoOffset.x -= static_cast<float>(m_tileWidth / 2u);
+		isoOffset.y += static_cast<float>(m_tileHeight / 2u);
+
+		v0.position += isoOffset;
+		v1.position += isoOffset;
+		v2.position += isoOffset;
+		v3.position += isoOffset;
+	}
+
+	v0.color = colour;
+	v1.color = colour;
+	v2.color = colour;
+	v3.color = colour;
+
+	v0.position += offset;
+	v1.position += offset;
+	v2.position += offset;
+	v3.position += offset;
+    
+    return { v0, v1, v2, v3 };
 }
 
 TileQuad* MapLoader::addTileToLayer(MapLayer& layer, sf::Uint16 x, sf::Uint16 y, sf::Uint32 gid, const sf::Vector2f& offset)

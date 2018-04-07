@@ -169,6 +169,7 @@ namespace tmx
         bool parseCollectionOfImages(const pugi::xml_node& tilesetNode);
 		bool parseLayer(const pugi::xml_node& layerNode);
         TileQuad* addTileToLayer(MapLayer& layer, sf::Uint16 x, sf::Uint16 y, sf::Uint32 gid, const sf::Vector2f& offset = sf::Vector2f());
+		std::vector<sf::Vertex> getTileToAnimationQuad(MapLayer& layer, sf::Uint16 x, sf::Uint16 y, sf::Uint32 gid, const sf::Vector2f& offset = sf::Vector2f());
 		bool parseObjectgroup(const pugi::xml_node& groupNode);
 		bool parseImageLayer(const pugi::xml_node& imageLayerNode);
 		void parseLayerProperties(const pugi::xml_node& propertiesNode, MapLayer& destLayer);
