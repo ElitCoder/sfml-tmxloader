@@ -35,6 +35,7 @@ it freely, subject to the following restrictions:
 
 #include <memory>
 #include <array>
+#include <unordered_map>
 
 namespace tmx
 {
@@ -77,6 +78,8 @@ namespace tmx
 		const sf::Vector2u m_mapSize;
 		const sf::Vector2u m_patchCount;
 		const sf::Vector2u m_tileSize;
+		
+		mutable std::unordered_map<int, int> patch_index_cache_;
 
 		std::vector<TileQuad::Ptr> m_quads;
 		mutable std::vector<TileQuad*> m_dirtyQuads;

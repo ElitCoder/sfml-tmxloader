@@ -22,6 +22,7 @@ namespace tmx {
 		int animation_tile_id_;
 		std::chrono::time_point<std::chrono::system_clock> next_animation_;
 		int current_tile_;
+		bool animation_ = false;
 		
 		void setAnimationInformation(const std::vector<int>& tile_ids, const std::vector<int>& durations, int tile_id);
 		bool animationElapsed();

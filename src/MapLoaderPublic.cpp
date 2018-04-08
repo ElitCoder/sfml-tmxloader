@@ -217,7 +217,14 @@ bool MapLoader::quadTreeAvailable() const
 	return m_quadTreeAvailable;
 }
 
-
+void MapLoader::updateAnimationTiles() const {
+	for (auto& tile : m_tileInfo) {
+		if (tile.animationElapsed()) {
+			// Change the sprite
+			tile.animationStartTimer();
+		}
+	}
+}
 
 TileInfo::TileInfo()
 	: TileSetId (0u)
@@ -244,6 +251,8 @@ void TileInfo::setAnimationInformation(const std::vector<int>& tile_ids, const s
 	animation_durations_ = durations;
 	animation_tile_id_ = tile_id;
 	
+	animation_ = animation_tile_ids_.size() > 0;
+	
 	//std::cout << "SET ANIMATION INFORMATION\n";
 	//std::cout << "id " << tile_id << std::endl;
 }
@@ -253,7 +262,7 @@ bool TileInfo::animationElapsed() {
 }
 
 void TileInfo::animationStartTimer() {
-	if (animation_tile_ids_.empty())
+	if (!animation_)
 		return;
 		
 	current_tile_++;
@@ -275,7 +284,7 @@ int TileInfo::getCurrentTileID() const {
 }
 
 bool TileInfo::isAnimation() const {
-	return !animation_tile_ids_.empty();
+	return animation_;
 }
 
 bool TileInfo::isLoaded() const {

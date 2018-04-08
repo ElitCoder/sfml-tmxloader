@@ -190,74 +190,49 @@ void LayerSet::draw(sf::RenderTarget& rt, sf::RenderStates states) const
             auto* patch_drawable = &m_patches[index];
             
 			if (index < m_patches.size() && !m_patches[index].empty()) {
-				// TODO: This is SLOW
-				auto iterator = find_if(m_quads.begin(), m_quads.end(), [&index] (const TileQuad::Ptr& ptr) {
-					return (int)index == ptr->m_patchIndex;
-				});
-				
-				if (iterator != m_quads.end()) {
-					int gid = (*iterator)->gid_from_tile_;
-					
-					auto& tile_info = m_tileInfo->at(gid);
-                    
-                    //if (gid > 0 && gid < 100)
-                        //std::cout << "GID: " << gid << std::endl;
-					
-					// Does this tile even have animation data?
-					if (!tile_info.animation_tile_ids_.empty()) {						
-						// Should we update the tile?
-						if (tile_info.animationElapsed()) {
-							// Change the sprite
-							tile_info.animationStartTimer();
+                // Check cache for TileQuad index
+                auto iterator = patch_index_cache_.find(index);
+                int gid_index = -1;
+                bool was_cached = true;
+                
+                if (iterator != patch_index_cache_.end()) {
+                    gid_index = iterator->second;
+                } else {
+                    // Slow finding, cache was empty
+                    for (auto& tile_quad : m_quads) {
+                        if ((int)index == tile_quad->m_patchIndex) {
+                            gid_index = tile_quad->gid_from_tile_;
                             
-                            
-                            
-                            //std::cout << "CHANGED SPRITE\n";
-						}
-                        
-                        auto& current_tile = tile_info.getCurrentAnimation();
-                        
-                        // Change texture position for drawable
-                        for (size_t vertex_index = 0; vertex_index < patch_drawable->size(); vertex_index++) {
-                            auto& current = patch_drawable->at(vertex_index);
-                            
-                            //printVertex({ current });
-                            current.texCoords = current_tile.at(vertex_index % 4).texCoords;
-                            //printVertex({ current });
+                            break;
                         }
+                    }
+                    
+                    // We didn't find the tile, wtf?
+                    assert(gid_index != -1);
+                    
+                    // Add finding to cache
+                    patch_index_cache_[index] = gid_index;
+                    was_cached = false;
+                }
+                
+                auto& tile_info = (*m_tileInfo)[gid_index];
+                
+                if (tile_info.isAnimation()) {
+                    auto& current_tile = tile_info.getCurrentAnimation();
+                    
+                    // TODO: This is still somewhat slow
+                    // Change texture position for drawable
+                    for (size_t vertex_index = 0; vertex_index < patch_drawable->size(); vertex_index++) {
+                        auto& current = patch_drawable->at(vertex_index);
                         
-                        //std::cout << "OLD\n";
-                        //std::cout << "SIZE PATCH: " << patch_drawable->size() << std::endl;
-                        //printVertex(patch_drawable);
-                        
-                        // Change patch_drawable to actual animation quad
-                        //patch_drawable = &tile_info.getCurrentAnimation();
-                        //auto current_animation_gid = tile_info.getCurrentTileID();
-                        
-                        //std::cout << "Updated patch\n";
-                        //printVertex(patch_drawable);
-                        
-                        //exit(1);
-                        
-                        /*
-                        // Find current tile, this is also slow
-                        auto tile_iterator = find_if(m_quads.begin(), m_quads.end(), [&current_animation_gid] (const TileQuad::Ptr& ptr) {
-                            return (int)current_animation_gid == ptr->gid_from_tile_;
-                        });
-                        */
-                        
-                        //if (tile_iterator == m_quads.end())
-                        //    std::cout << "DID NOT FIND ANIMATION\n";
-                        
-                        //std::cout << "has animation\n";
-					}					
-				}
+                        current.texCoords = current_tile.at(vertex_index % 4).texCoords;
+                    }
+                }
 								
 				// Find out if it's a texture here?
 				states.texture = &m_texture;
                 
                 rt.draw(patch_drawable->data(), patch_drawable->size(), sf::Quads, states);
-				//rt.draw(m_patches[index].data(), static_cast<unsigned>(m_patches[index].size()), sf::Quads, states);
 			}
 		}
 	}

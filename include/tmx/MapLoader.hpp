@@ -130,6 +130,10 @@ namespace tmx
         \brief Returns true if the Quad Tree is available
         */
         bool quadTreeAvailable() const;
+		
+		// Updates animation tiles
+		// Everything will be static if this is not called within game loop
+		void updateAnimationTiles() const;
 
     public:
 		//properties which correspond to tmx
@@ -148,7 +152,7 @@ namespace tmx
 		std::vector<std::unique_ptr<sf::Texture>> m_tilesetTextures; //textures created from complete sets used when drawing vertex arrays
 		const sf::Uint8 m_patchSize;
 		
-		std::vector<TileInfo> m_tileInfo; //stores information on all the tilesets for creating vertex arrays
+		mutable std::vector<TileInfo> m_tileInfo; //stores information on all the tilesets for creating vertex arrays
 
 		sf::VertexArray m_gridVertices; //used to draw map grid in debug
 		bool m_mapLoaded, m_quadTreeAvailable;

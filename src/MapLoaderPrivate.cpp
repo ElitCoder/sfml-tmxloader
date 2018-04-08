@@ -1268,6 +1268,9 @@ void MapLoader::draw(sf::RenderTarget& rt, sf::RenderStates /* states */) const
 			layer.cull(m_bounds);
 	}
 	m_lastViewPos = view.getCenter();
+    
+    // Update animations
+    updateAnimationTiles();
 
 	for(auto& layer : m_layers)
 		rt.draw(layer);
